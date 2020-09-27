@@ -175,13 +175,17 @@ function unconfirmedTransactions(){
     fi
 
     rm ut.* money* amount.table 2>/dev/null
-
 }
 
-parameter_counter=0; while getopts "e:n:h:" arg; do
+function inspectTransactions(){
+    inspect_transactions=$1
+}
+
+parameter_counter=0; while getopts "e:n:i:h:" arg; do
 	case $arg in
 		e) exploration_mode=$OPTARG; let parameter_counter+=1;;
 		n) number_output=$OPTARG; let parameter_counter+=1;;
+        i) inspect_transactions=$OPTARG; let parameter_counter+=1;;
 		h) helpPanel;;
 	esac
 done
@@ -197,6 +201,8 @@ else
 		else
 			unconfirmedTransactions $number_output
 		fi
-	fi
+	elif [ "$(echo $exploration_mode)" == "inspect" ]; then
+        inspectTransactions $inspect_transactions
+    fi
 fi
 
