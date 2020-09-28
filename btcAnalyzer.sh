@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Author Zerxcool
+# Author Juan Alberto a.k.a (Zerxcool)
 
 #Colors
 
@@ -41,7 +41,7 @@ function helpPanel(){
 # Variavles globales
 unconfirmed_transactions="https://www.blockchain.com/es/btc/unconfirmed-transactions"
 inspect_transactions="https://www.blockchain.com/es/btc/tx/"
-inspect_address_url="https://www.blockchain.com/es/btc/address/"
+inspect_address_url="https://www.blockchain.com/es/btc/tx/"
 
 function printTable(){
 
@@ -175,10 +175,34 @@ function unconfirmedTransactions(){
     fi
 
     rm ut.* money* amount.table 2>/dev/null
+
 }
 
 function inspectTransactions(){
-    inspect_transactions=$1
+    inspect_transactions_hash=$1
+
+    echo "Total entradas_Total de salida" > total_entrada_salida.tmp
+
+    while [ "$(cat total_entrada_salida.tmp | wc -l)" == "1" ]; do 
+        curl -s "${inspect_address_url}${inspect_transactions_hash}" | html2text | grep -E "Total entradas|Total de salida" -A 1 | grep -v -E "Total entradas|Total de salida" | xargs | tr ' ' '_' | sed 's/_BTC/ BTC/g' >> total_entrada_salida.tmp
+    done
+
+    echo -ne "${grayColor}"
+    printTable '_' "$(cat total_entrada_salida.tmp)"
+    echo -ne "${endColor}"
+    rm total_entrada_salida.tmp 2>/dev/null
+
+    echo "Direction (Inputs)_Value" > entradas.tmp
+
+    while [ "$(cat entradas.tmp | wc -l)" == "1" ]; do
+        curl -s "${inspect_address_url}${inspect_transactions_hash}" | html2text | grep -E "Total entradas|Total de salida" -A 1 | grep -v -E "Total entradas|Total de salida" | xargs | tr ' ' '_' | sed 's/_BTC/ BTC/g' >> entradas.tmp
+    done
+
+    echo -ne "${greenColor}"
+    printTable '_' "$(cat entradas.tmp)"
+    echo -ne "${endColor}"
+    rm entradas.tmp 2>/dev/null
+
 }
 
 parameter_counter=0; while getopts "e:n:i:h:" arg; do
@@ -205,4 +229,3 @@ else
         inspectTransactions $inspect_transactions
     fi
 fi
-
