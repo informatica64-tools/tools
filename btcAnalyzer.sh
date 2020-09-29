@@ -33,6 +33,7 @@ function helpPanel(){
 	echo -e "\n\t${grayColor}[-n]${endColor}${yellowColor} Limit the number of results${endColor}${blueColor} (Example: -n 10)${endColor}"
 	echo -e "\n\t${grayColor}[-i]${endColor}${yellowColor} Provide the transaction identifier${endColor}${blueColor} (Example -i ba76ab9876b98ad5b98ad5b9a8db5ad98b5ad98b5a9d${endColor})"
     echo -e "\n\t${grayColour}[-a]${endColour}${yellowColour} Provide a transaction address${endColour}${blueColour} (Example: -a bad876fa876A876f8d6a861b9a8bd9a)${endColour}"
+	echo -e "\n\t$"
     echo -e "\n\t${grayColor}[-h]${endColor}${yellowColor} Show this help panel${endColor}\n"
 
 	exit 1
@@ -192,16 +193,27 @@ function inspectTransactions(){
     echo -ne "${endColor}"
     rm total_entrada_salida.tmp 2>/dev/null
 
-    echo "Direction (Inputs)_Value" > entradas.tmp
+    echo "Direction (Inputs)_Valor" > entradas.tmp
 
     while [ "$(cat entradas.tmp | wc -l)" == "1" ]; do
-        curl -s "${inspect_address_url}${inspect_transactions_hash}" | html2text | grep -E "Total entradas|Total de salida" -A 1 | grep -v -E "Total entradas|Total de salida" | xargs | tr ' ' '_' | sed 's/_BTC/ BTC/g' >> entradas.tmp
+        curl -s "${inspect_address_url}${inspect_transactions_hash}" | html2text | grep "Entradas" -A 500 | grep "Salidas" -B 500 | grep "Direcci" -A 3 | grep -v -E "Direcci|Valor|\--" | awk 'NR%2{printf "%s ",$0;next;}1' | awk '{print $1 "_" $2 " " $3}' >> entradas.tmp
     done
 
     echo -ne "${greenColor}"
     printTable '_' "$(cat entradas.tmp)"
     echo -ne "${endColor}"
     rm entradas.tmp 2>/dev/null
+
+    echo "Direction (Outputs)_Valor" > salidas.tmp
+
+    while [ "$(cat salidas.tmp | wc -l)" == "1" ]; do
+        curl -s "${inspect_address_url}${inspect_transactions_hash}" | html2text | grep "Salidas" -A 500 | grep "Cree un monedero" -B 500 | grep "Direcci" -A 3 | grep -v -E "Direcci|Valor|\--" | awk 'NR%2{printf "%s ",$0;next;}1' | awk '{print $1 "_" $2 " " $3}' >> salidas.tmp
+    done
+
+    echo -ne "${greenColor}"
+    printTable '_' "$(cat salidas.tmp)"
+    echo -ne "${endColor}"
+    rm salidas.tmp 2>/dev/null
 
 }
 
@@ -229,3 +241,5 @@ else
         inspectTransactions $inspect_transactions
     fi
 fi
+
+
