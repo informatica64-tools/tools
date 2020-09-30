@@ -32,8 +32,7 @@ function helpPanel(){
 	echo -e "\t\t${purpleColor}address${endColor}${yellowColor}:\t\t\t inspect a transaction's address${endColor}"
 	echo -e "\n\t${grayColor}[-n]${endColor}${yellowColor} Limit the number of results${endColor}${blueColor} (Example: -n 10)${endColor}"
 	echo -e "\n\t${grayColor}[-i]${endColor}${yellowColor} Provide the transaction identifier${endColor}${blueColor} (Example -i ba76ab9876b98ad5b98ad5b9a8db5ad98b5ad98b5a9d${endColor})"
-    echo -e "\n\t${grayColour}[-a]${endColour}${yellowColour} Provide a transaction address${endColour}${blueColour} (Example: -a bad876fa876A876f8d6a861b9a8bd9a)${endColour}"
-	echo -e "\n\t$"
+    echo -e "\n\t${grayColor}[-a]${endColour}${yellowColor} Provide a transaction address${endColor}${blueColor} (Example: -a bad876fa876A876f8d6a861b9a8bd9a)${endColor}"
     echo -e "\n\t${grayColor}[-h]${endColor}${yellowColor} Show this help panel${endColor}\n"
 
 	exit 1
@@ -158,7 +157,7 @@ function unconfirmedTransactions(){
         echo $money > money.tmp
     done;
 
-    echo -n "Total quantity_" > amount.table
+    echo -n "Total cantidad_" > amount.table
     echo "\$$(printf "%'.d\n" $(cat money.tmp))" >> amount.table
 
     if [ "$(cat ut.table | wc -l)" != "1" ]; then
@@ -193,7 +192,7 @@ function inspectTransactions(){
     echo -ne "${endColor}"
     rm total_entrada_salida.tmp 2>/dev/null
 
-    echo "Direction (Inputs)_Valor" > entradas.tmp
+    echo "Dirección (Entradas)_Valor" > entradas.tmp
 
     while [ "$(cat entradas.tmp | wc -l)" == "1" ]; do
         curl -s "${inspect_address_url}${inspect_transactions_hash}" | html2text | grep "Entradas" -A 500 | grep "Salidas" -B 500 | grep "Direcci" -A 3 | grep -v -E "Direcci|Valor|\--" | awk 'NR%2{printf "%s ",$0;next;}1' | awk '{print $1 "_" $2 " " $3}' >> entradas.tmp
@@ -204,7 +203,7 @@ function inspectTransactions(){
     echo -ne "${endColor}"
     rm entradas.tmp 2>/dev/null
 
-    echo "Direction (Outputs)_Valor" > salidas.tmp
+    echo "Dirección (Salidas)_Valor" > salidas.tmp
 
     while [ "$(cat salidas.tmp | wc -l)" == "1" ]; do
         curl -s "${inspect_address_url}${inspect_transactions_hash}" | html2text | grep "Salidas" -A 500 | grep "Cree un monedero" -B 500 | grep "Direcci" -A 3 | grep -v -E "Direcci|Valor|\--" | awk 'NR%2{printf "%s ",$0;next;}1' | awk '{print $1 "_" $2 " " $3}' >> salidas.tmp
@@ -217,11 +216,34 @@ function inspectTransactions(){
 
 }
 
-parameter_counter=0; while getopts "e:n:i:h:" arg; do
+function inspectAddress(){
+	address_hash=$1
+	echo "Transacciones realizadas_Cantidad total recibida (BTC)_Cantidad total enviada (BTC)_Saldo total en la cuenta (BTC)" > address.information
+	curl -s "${inspect_address_url}${address_hash}" | html2text | grep -E "Transacciones|Total Recibidas|Cantidad total enviada|Saldo final" -A 1 | grep -v -E "Transacciones|Total Recibidas|Cantidad total enviada|Saldo final" | head -n -1 | xargs | tr ' ' '_' | sed 's/_BTC/ BTC/g'
+
+	echo -ne "${grayColor}"
+	printTable '_' "$(cat address.information)"
+	echo -ne "${endColor}"
+	rm addres.information 2>/dev/null
+
+	bitcoin_value=$(curl -s "https://cointelegraph.com/bitcoin-price-index" | html2text | grep "Last Price" | head -n 1 | awk 'NF{print $NF}' | tr -d ',')
+
+	curl -s "${inspect_address_url}${address_hash} | html2text | grep 'Transacciones' -A 1 | head -n -2 | grep -v -E 'Transacciones|\--'" > address.information
+	curl -s "${inspect_address_url}${address_hash} | html2text | grep -E 'Total Recibidas|Cantidad total enviada|Saldo final' -A 1 | grep -v -E 'Total Recibidas|Cantidad total enviada|Saldo final|\--'" > bitcoin_to_dollars
+
+	cat bitcoin_to_dollars | while read value; do
+		echo "\$$(printf "%'.d\n" $(echo '$(echo $value | awk 'print $1')*bitcoin_value' | bc) 2>/dev/null)" >> address.information
+
+		cat address.information
+	done
+}
+
+parameter_counter=0; while getopts "e:n:i:a:h:" arg; do
 	case $arg in
 		e) exploration_mode=$OPTARG; let parameter_counter+=1;;
 		n) number_output=$OPTARG; let parameter_counter+=1;;
         i) inspect_transactions=$OPTARG; let parameter_counter+=1;;
+		a) inspect_address=$OPTARG; let parameter_counter+=1;;
 		h) helpPanel;;
 	esac
 done
