@@ -222,7 +222,7 @@ function inspectAddress(){
 	echo "Transacciones realizadas_Cantidad total recibida (BTC)_Cantidad total enviada (BTC)_Saldo total en la cuenta (BTC)" > address.information
 	curl -s "${inspect_address_url}${address_hash}" | html2text | grep -E "Transacciones|Total Recibidas|Cantidad total enviada|Saldo final" -A 1 | head -n -2 | grep -v -E "Transacciones|Total Recibidas|Cantidad total enviada|Saldo final" | xargs | tr ' ' '_' | sed 's/_BTC/ BTC/g' >> address.information
 
-	echo -ne "${grayColour}"
+	echo -ne "${yellowColour}"
 	printTable '_' "$(cat address.information)"
 	echo -ne "${endColour}"
 	rm address.information 2>/dev/null
@@ -237,9 +237,22 @@ function inspectAddress(){
 		echo "\$$(printf "%'.d\n" $(echo "$(echo $value | awk '{print $1}')*$bitcoin_value" | bc) 2>/dev/null)" >> address.information
 	done
 
-	cat address.information
+	line_null=$(cat address.information | grep -n "^\$$" | awk '{print $1}' FS=":")
 
-	line_null
+	if [ $line_null ]; then
+		sed "${line_null}s/\$/0.00/" -i address.information
+	fi
+
+	cat address.information | xargs | tr ' ' '_' >> address.information2
+	rm address.information 2>/dev/null && mv address.information2 address.information
+	sed '1iTransacciones realizadas_Cantidad total recibidas (USD)_Cantidad total enviada (USD)_Saldo actual en la cuenta (USD)' -i address.information
+
+	echo -ne "${greenColor}"
+	printTable '_' "$(cat address.information)"
+	echo -ne "${endColor}"
+
+	rm address.information 2>/dev/null
+	rm bitcoin_to_dollars 2>/dev/null
 }
 
 parameter_counter=0; while getopts "e:n:i:a:h:" arg; do
