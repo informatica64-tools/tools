@@ -1,0 +1,65 @@
+#!/bin/bash
+
+#Colours
+greenColor="\e[0;32m\033[1m"
+endColor="\033[0m\e[0m"
+redColor="\e[0;31m\033[1m"
+blueColor="\e[0;34m\033[1m"
+yellowColor="\e[0;33m\033[1m"
+purpleColor="\e[0;35m\033[1m"
+turquoiseColor="\e[0;36m\033[1m"
+grayColor="\e[0;37m\033[1m"
+
+# Global variables
+address=$1
+a="1"
+
+trap ctrl_c INT
+
+function_ctrl(){
+	echo -ne "\n${redColor}[!] Existing...\n${endColor}"
+}
+
+function helpPanel(){
+	echo -e "\n${redColor}[!] Usage: ./whichsystem 127.0.0.1${endColor}"
+
+	exit 1
+}
+
+function whichsystem(){
+	while [ "$(echo $a)" == "1" ]; do
+		ping -c1 $address > ttl.tmp
+		ttl="$(cat ttl.tmp | grep '64 bytes' | awk '{print $6}' | tr '=' ' ' | awk '{print $2}')"
+		if [ "$(echo $ttl)" == "64" ]; then
+			echo -e "\n${yellowColor}$address: ${endColor}linux"
+
+			rm ttl.* 2>/dev/null; exit 1
+
+		elif [ "$(echo $ttl)" == "63" ]; then
+			echo -e "\n${yellowColor}$address: ${endColor}linux"
+
+			rm ttl.* 2>/dev/null; exit 1
+
+		elif [ "$(echo $ttl)" == "128" ]; then
+			echo -e "\n${yellowColor}$address: ${endColor}windows"
+
+			rm ttl.* 2>/dev/null; exit 1
+
+		else
+			echo "another OS; ex: (Freebsd)"
+		fi
+	done
+}
+
+parameter_counter=0; while getopts "a:h" arg; do
+	case $arg in
+		a) address=$OPTARG; let parameter_counter+=1;;
+		h) helpPanel;;
+	esac
+done
+
+if [ $parameter_counter -eq 0 ]; then
+	helpPanel
+else
+	whichsystem $address
+fi
