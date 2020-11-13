@@ -10,7 +10,7 @@ sudo apt-get install -y curl nikto hydra sqlmap nmap hashcat netcat john yersini
 sudo apt-get install -y postgresql apache2 php
 
 # Spoofing tools
-sudo apt-get install -y dsniff exiftool net-tools ettercap-graphical steghide
+sudo apt-get install -y dsniff exiftool net-tools ettercap-graphical steghide binwalk smbclient dnsrecon recon-ng
 
 # Kali Linux repositories
 sudo apt-get install gnupg -y
