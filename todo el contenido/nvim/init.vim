@@ -1,11 +1,9 @@
-
 set encoding=utf-8
 set number relativenumber
 syntax enable
 set noswapfile
 set scrolloff=7
 set backspace=indent,eol,start
-
 
 set tabstop=4
 set softtabstop=4
@@ -25,14 +23,18 @@ Plug 'norcalli/nvim-colorizer.lua'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 
-
+let mapleader=","
+noremap <leader>w :w<cr>
+noremap <leader>qq :q!<cr>
+:imap ii <Esc>
+noremap <leader>wq :wq<cr>
 call plug#end()
 
 colorscheme gruvbox
 
 let g:airline_themes='gruvbox'
 
-et number
+set number
 set mouse=a
 set numberwidth=1
 set clipboard=unnamed
